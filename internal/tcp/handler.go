@@ -25,7 +25,6 @@ type Heartbeat struct {
 	ErrorMessages    []string `json:"error_messages"`
 	LastMaintenance  string   `json:"last_maintenance"`
 	LastCommTime     string   `json:"last_comm_time"`
-	Runtime          string   `json:"runtime"`
 }
 
 func messageHandler(c *Connection) {

@@ -43,8 +43,16 @@ func (s *Server) Start() error {
 	return nil
 }
 
+func (s *Server) Stop() {
+	close(s.quitch)
+	for _, c := range s.connections {
+		c.close()
+	}
+}
+
 func (s *Server) acceptLoop() {
 	for {
+		defer s.wg.Done()
 		conn, err := s.ln.Accept()
 		if err != nil {
 			fmt.Println("server failed to accept error:", err)
@@ -53,6 +61,7 @@ func (s *Server) acceptLoop() {
 		c := newConnection(conn)
 		s.connections[c.id] = c
 		s.connch <- conn
+		s.wg.Add(1)
 
 		fmt.Printf("new connection to the server: %s\n", conn.RemoteAddr())
 
@@ -82,13 +91,6 @@ func (s *Server) readLoop(c *Connection) {
 
 			go messageHandler(c)
 		}
-	}
-}
-
-func (s *Server) Stop() {
-	close(s.quitch)
-	for _, c := range s.connections {
-		c.close()
 	}
 }
 

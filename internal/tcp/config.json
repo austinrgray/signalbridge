@@ -1,0 +1,21 @@
+{
+    "server": {
+        "max_connections": 100,
+        "max_connection_attempts": 15,
+        "max_retries_on_error": 3,
+        "max_message_size": 4096,
+        "connection_attempt_delay": "5s",
+        "connection_lockout_duration": "60s",
+        "handshake_timeout": "10s",
+        "read_timeout": "15s",
+        "write_timeout": "15s",
+        "rate_limiter": {
+            "enabled": true,
+            "requests_per_second": 10,
+            "burst_size": 20
+        }
+    },
+    "client_keys": {
+        "oxrecycler_public_key_rsa": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA4dS2g2wZyMJge3gQ3o4hjq0q53fRbEB7gMf12t8txZo3lz4GHrflm0J3W0LVpa0woDPdBdp2j9dx1cQmTAg7yz8M0gbTtLVHjyroZy6ImDZ5/MHgVAYmlJbRt7TO5r3zXgJ9iKw7gHlHq7Up0aCoHj+olYfgsdJ4erOHZ7u1+UVBRPqtdUGF1jRmuRLffrpF2XJ4YhbzKXzIqBhU1H0NzZlgdgd34b2FfG9e1PTuEdmYpa5g=="
+    }
+}

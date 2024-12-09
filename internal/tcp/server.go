@@ -1,110 +1,93 @@
 package tcp
 
 import (
-	"fmt"
+	"log"
 	"net"
 	"sync"
-	"time"
 )
 
 type Server struct {
-	ln          net.Listener
-	listenAddr  string
-	connections map[string]*Connection
-	connch      chan net.Conn
-	quitch      chan struct{}
+	Config      Config
+	ListenAddr  string
+	Listener    net.Listener
+	Connections map[string]*Connection
+	mu          sync.RWMutex
 	wg          sync.WaitGroup
 }
 
-func NewServer(listenAddr string) *Server {
+func NewServer() *Server {
+	config, err := LoadConfig()
+	if err != nil {
+		log.Printf("Failed to load config %s", err)
+	}
+
+	addr := string(config.Env.TCPServerHost + config.Env.TCPServerPort)
 	return &Server{
-		listenAddr:  listenAddr,
-		connections: make(map[string]*Connection),
-		connch:      make(chan net.Conn, 10),
-		quitch:      make(chan struct{}),
+		ListenAddr:  addr,
+		Connections: make(map[string]*Connection),
 	}
 }
 
 func (s *Server) Start() error {
-	ln, err := net.Listen("tcp", s.listenAddr)
+	ln, err := net.Listen("tcp", s.ListenAddr)
 	if err != nil {
 		return err
 	}
 	defer ln.Close()
-	s.ln = ln
+	s.Listener = ln
 
-	go s.acceptLoop()
+	log.Printf("Server listening at: %s", s.ListenAddr)
 
-	<-s.quitch
-	close(s.connch)
-
-	s.wg.Wait()
-
+	s.AcceptLoop()
 	return nil
 }
 
 func (s *Server) Stop() {
-	close(s.quitch)
-	for _, c := range s.connections {
-		c.close()
+	log.Printf("Shutting down the server at: %s", s.ListenAddr)
+	s.Listener.Close()
+
+	s.mu.Lock()
+	for _, conn := range s.Connections {
+		conn.Close()
 	}
+	s.mu.Unlock()
+	s.wg.Wait()
 }
 
-func (s *Server) acceptLoop() {
+func (s *Server) AcceptLoop() {
 	for {
-		defer s.wg.Done()
-		conn, err := s.ln.Accept()
+		conn, err := s.Listener.Accept()
 		if err != nil {
-			fmt.Println("server failed to accept error:", err)
+			if opErr, ok := err.(*net.OpError); ok && opErr.Err.Error() == "use of closed network connection" {
+				log.Println("AcceptLoop: Listener has been closed. Exiting...")
+				return
+			}
+			log.Printf("AcceptLoop: Error accepting connection: %v", err)
+			continue
 		}
 
-		c := newConnection(conn)
-		s.connections[c.id] = c
-		s.connch <- conn
 		s.wg.Add(1)
+		go func(conn net.Conn) {
+			defer s.wg.Done()
 
-		fmt.Printf("new connection to the server: %s\n", conn.RemoteAddr())
-
-		go s.readLoop(c)
-	}
-}
-
-func (s *Server) readLoop(c *Connection) {
-	defer c.close()
-	buf := make([]byte, 1024)
-	for {
-		select {
-		case <-c.quitch:
-			fmt.Printf("Connection %s closed\n", c.id)
-		default:
-			n, err := c.conn.Read(buf)
+			connection, err := InitializeConnection(conn, s.Config)
 			if err != nil {
-				fmt.Printf("Error reading from connection %s: %v\n", c.id, err)
+				log.Printf("AcceptLoop: Error initializing connection: %v", err)
 				return
 			}
 
-			c.msgch <- Message{
-				from:      c.conn.RemoteAddr().String(),
-				payload:   buf[:n],
-				timestamp: time.Now(),
-			}
+			s.mu.Lock()
+			s.Connections[connection.ConnectionID] = connection
+			s.mu.Unlock()
 
-			go messageHandler(c)
-		}
+			connection.Start()
+
+			s.mu.Lock()
+			delete(s.Connections, connection.ConnectionID)
+			s.mu.Unlock()
+
+			connection.Close()
+			log.Printf("Connection %s closed", conn.RemoteAddr())
+		}(conn)
 	}
 }
-
-/*
-func (s *Server) manageConnections() {
-	for conn := range s.connch {
-		connection := newConnection(conn)
-		s.connections[connection.id] = connection
-		s.wg.Add(1)
-		go func() {
-			defer s.wg.Done()
-			connection.readLoop()
-			delete(s.connections, connection.id)
-		}()
-
-	}
-}*/

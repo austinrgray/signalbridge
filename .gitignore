@@ -1,0 +1,11 @@
+#Ignore
+/bin/
+server.crt
+server.key
+
+#Don't ignore
+!go.mod
+!go.sum
+!main.go
+!Makefile
+!tcp_conn_test.go

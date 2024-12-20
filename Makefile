@@ -7,4 +7,4 @@ run: build
 	./bin/app
 
 test:
-	go test -count=1
+	go test -test.timeout=10m0s -count=1

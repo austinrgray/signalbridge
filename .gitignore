@@ -1,4 +1,5 @@
 #Ignore
+/archived/
 /bin/
 server.crt
 server.key

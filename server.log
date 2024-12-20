@@ -1,0 +1,94 @@
+time=2024-12-17T17:41:15.983-06:00 level=INFO msg="new connection" addr=127.0.0.1:55174
+time=2024-12-17T17:41:18.985-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:18.985-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:18.985-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:21.985-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:21.985-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:21.985-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:24.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:24.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:24.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:27.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:27.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:27.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:30.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:30.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:30.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:33.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:33.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:33.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:36.985-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:36.985-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:36.985-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:39.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:39.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:39.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:42.986-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:41:42.986-06:00 level=INFO msg="writing to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:42.986-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:55174
+time=2024-12-17T17:41:45.595-06:00 level=ERROR msg="conn read error" err=EOF
+time=2024-12-17T17:42:40.011-06:00 level=INFO msg="initializing listener" addr=:9090
+time=2024-12-17T17:42:40.011-06:00 level=INFO msg="server started" addr=:9090
+time=2024-12-17T17:42:40.011-06:00 level=INFO msg="Server started on port 8080"
+time=2024-12-17T17:42:47.125-06:00 level=INFO msg="new connection" addr=127.0.0.1:37408
+time=2024-12-17T17:42:50.127-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:42:50.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:50.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:53.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:42:53.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:53.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:56.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:42:56.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:56.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:59.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:42:59.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:42:59.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:02.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:02.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:02.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:05.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:05.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:05.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:08.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:08.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:08.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:11.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:11.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:11.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:14.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:14.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:14.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:17.127-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:17.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:17.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:20.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:20.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:20.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:23.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:23.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:23.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:26.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:26.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:26.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:29.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:29.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:29.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:32.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:32.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:32.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:35.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:35.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:35.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:38.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:38.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:38.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:41.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:41.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:41.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:44.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:44.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:44.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:47.128-06:00 level=INFO msg="got message to handle:" msg={}
+time=2024-12-17T17:43:47.128-06:00 level=INFO msg="writing to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:47.128-06:00 level=INFO msg="successfully wrote to" addr=127.0.0.1:37408
+time=2024-12-17T17:43:47.131-06:00 level=ERROR msg="conn read error" err="read tcp 127.0.0.1:9090->127.0.0.1:37408: read: connection reset by peer"

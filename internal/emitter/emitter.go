@@ -3,14 +3,14 @@ package emitter
 import (
 	"context"
 	"fmt"
-	"os"
-	"os/signal"
-	"syscall"
+	"log"
+	"sync"
 	"time"
 
+	logging "signalbridge/0codexclone/logging"
 	cfg "signalbridge/configs/emitter"
 
-	"github.com/austinrgray/signalcodex/logging"
+	//"github.com/austinrgray/signalcodex/logging"
 	"github.com/austinrgray/signalcodex/utils"
 
 	"github.com/austinrgray/signalcodex/models"
@@ -25,95 +25,117 @@ type Emitter struct {
 	svc    micro.Service
 	js     jetstream.JetStream
 	stream jetstream.Stream
-	logger *zap.Logger
 }
 
-func NewEmitter(logger *zap.Logger) *Emitter {
-	return &Emitter{
-		logger: logger,
+func NewEmitter() *Emitter {
+	return &Emitter{}
+}
+
+func (e *Emitter) InitializationSequence(ctx context.Context, cancel context.CancelCauseFunc, config cfg.Config) error {
+	if err := e.Connect(ctx, cancel, config); err != nil {
+		return fmt.Errorf(logging.NATSConnectFailureLogMsg+": %w", err)
 	}
+	if err := e.InitializeJetstream(ctx, config.JS); err != nil {
+		return fmt.Errorf(logging.JetstreamInitFailureLogMsg+": %w", err)
+	}
+	if err := e.InitializeService(config.Micro); err != nil {
+		return fmt.Errorf(logging.MicroServiceInitFailureLogMsg+": %w", err)
+	}
+	return nil
 }
 
-type ContextKey int
+func (e *Emitter) ReInitialize(ctx context.Context, config cfg.Config) error {
+	if err := e.InitializeJetstream(ctx, config.JS); err != nil {
+		return fmt.Errorf(logging.JetstreamInitFailureLogMsg+": %w", err)
+	}
+	if err := e.InitializeService(config.Micro); err != nil {
+		return fmt.Errorf(logging.MicroServiceInitFailureLogMsg+": %w", err)
+	}
+	return nil
+}
 
-const (
-	ContextLogger ContextKey = iota
-)
+func (e *Emitter) Start(
+	ctx context.Context,
+	cancel context.CancelCauseFunc,
+	config cfg.Config,
+	mainWg *sync.WaitGroup) {
+	defer mainWg.Done()
+	startWg := sync.WaitGroup{}
+	logger := LoggerFromContext(ctx)
 
-func (e *Emitter) Start(config cfg.Config) {
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-
-	signalChan := make(chan os.Signal, 1)
-	signal.Notify(signalChan, os.Interrupt, syscall.SIGTERM)
-
+	startWg.Add(1)
 	go func() {
-		<-signalChan // Wait for a signal
-		e.logger.Info(logging.ReceivedTerminationSignalLogMsg)
-		cancel() // Cancel the context
+		<-ctx.Done()
+		e.Stop(ctx)
+		startWg.Done()
 	}()
 
-	if err := e.connect(config.NATS); err != nil {
-		e.logger.Fatal(logging.NATSConnectFailureLogMsg, zap.Error(err))
-		return
+	if err := e.addEmitCommandEndpoint(ctx, config.Micro.Endpoints["EmitCommand"]); err != nil {
+		logger.Error(logging.EndpointAddFailureLogMsg, zap.Error(err))
+		cancel(fmt.Errorf(logging.NetworkErrorSignal))
+	} else {
+		logger.Info(logging.EndpointAddSuccessLogMsg)
 	}
-	e.logger.Info(logging.NATSConnectSuccessLogMsg)
 
-	if err := e.initJetstream(ctx, config.JS); err != nil {
-		e.logger.Fatal(logging.JetstreamInitFailureLogMsg, zap.Error(err))
-		return
-	}
-	e.logger.Info(logging.JetstreamInitSuccessLogMsg)
-
-	if err := e.initService(config.Micro); err != nil {
-		e.logger.Fatal(logging.MicroServiceInitFailureLogMsg, zap.Error(err))
-		return
-	}
-	e.logger.Info(logging.MicroServiceInitSuccessLogMsg)
-
-	if err := e.addEmitCommandEndpoint(ctx, e.logger, config.Micro.Endpoints[0]); err != nil {
-		e.logger.Fatal(logging.EndpointAddFailureLogMsg, zap.Error(err))
-		return
-	}
-	e.logger.Info(logging.EndpointAddSuccessLogMsg)
-
-	<-ctx.Done()
-	e.Stop()
+	startWg.Wait()
 }
 
-func (e *Emitter) Stop() {
-	e.logger.Info(logging.DrainingNATSConnectionLogMsg)
+func (e *Emitter) Stop(ctx context.Context) {
+	logger := LoggerFromContext(ctx)
+
+	logger.Info(logging.NATSDrainingConnectionLogMsg)
 	if err := e.nconn.Drain(); err != nil {
-		e.logger.Warn(logging.NATSDrainingErrorLogMsg, zap.Error(err))
+		logger.Warn(logging.NATSDrainingErrorLogMsg, zap.Error(err))
 	}
-	e.logger.Info(logging.ServiceShutdownLogMsg)
+
+	if !e.nconn.IsClosed() {
+		logger.Info(logging.NATSClosingConnectionLogMsg)
+		e.nconn.Close()
+	}
+	logger.Info(logging.ServicesStoppedLogMsg)
 }
 
-func (e *Emitter) connect(config cfg.NATSConfig) error {
+func (e *Emitter) Connect(ctx context.Context, cancel context.CancelCauseFunc, config cfg.Config) error {
+	opts := append(config.NATS.Options, nats.ReconnectHandler(func(nconn *nats.Conn) {
+		logger := ctx.Value(cfg.ContextLoggerKey).(*zap.Logger)
+
+		e.nconn = nconn
+
+		if err := e.ReInitialize(ctx, config); err != nil {
+			logger.Error("failed to re-initialize connections", zap.Error(err))
+			cancel(fmt.Errorf(logging.NetworkErrorSignal))
+		}
+
+		logger.Info("successfully reconnected to nats server",
+			zap.String("server address", config.NATS.ServerAddr),
+			zap.String("stream name", config.JS.EmitStream.Config.Name),
+			zap.String("service name", config.ServiceName))
+	}))
+
 	var err error
-	e.nconn, err = nats.Connect(config.ServerAddr, config.Options...)
+	e.nconn, err = nats.Connect(config.NATS.ServerAddr, opts...)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Emitter) initJetstream(ctx context.Context, config cfg.JSConfig) error {
+func (e *Emitter) InitializeJetstream(ctx context.Context, config cfg.JSConfig) error {
 	var err error
 	e.js, err = jetstream.New(e.nconn, config.Options...)
 	if err != nil {
 		return err
 	}
-	logger := e.logger.With(zap.String("stream", config.Name))
-	ctx = context.WithValue(ctx, ContextLogger, logger)
-	e.stream, err = e.js.CreateOrUpdateStream(ctx, config.Streams[0].Config)
+
+	ctx = NewLoggerContext(ctx, zap.String("stream", config.EmitStream.Config.Name))
+	e.stream, err = e.js.CreateOrUpdateStream(ctx, config.EmitStream.Config)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (e *Emitter) initService(config cfg.MicroConfig) error {
+func (e *Emitter) InitializeService(config cfg.MicroConfig) error {
 	var err error
 	e.svc, err = micro.AddService(e.nconn, config.Config)
 	if err != nil {
@@ -122,11 +144,12 @@ func (e *Emitter) initService(config cfg.MicroConfig) error {
 	return nil
 }
 
-func (e *Emitter) addEmitCommandEndpoint(ctx context.Context, logger *zap.Logger, config cfg.EndpointConfig) error {
-	logger = logger.With(zap.String("handler", config.Name))
-	ctx = context.WithValue(ctx, ContextLogger, logger)
-
-	handler := newEmitHandler(ctx, e.js, config.PublishOptions, []micro.RespondOpt{}, logger)
+func (e *Emitter) addEmitCommandEndpoint(ctx context.Context, config cfg.EndpointConfig) error {
+	handler := newEmitHandler(
+		NewLoggerContext(ctx, zap.String("handler", config.Name)),
+		e.js,
+		config.PublishOptions,
+		[]micro.RespondOpt{})
 
 	err := e.svc.AddEndpoint(config.Name, handler, config.Options...)
 	if err != nil {
@@ -140,7 +163,6 @@ type EmitHandler struct {
 	js               jetstream.JetStream
 	publishOpts      []jetstream.PublishOpt
 	microRespondOpts []micro.RespondOpt
-	logger           *zap.Logger
 }
 
 func newEmitHandler(
@@ -148,14 +170,12 @@ func newEmitHandler(
 	js jetstream.JetStream,
 	publishOpts []jetstream.PublishOpt,
 	microRespondOpts []micro.RespondOpt,
-	logger *zap.Logger,
 ) EmitHandler {
 	return EmitHandler{
 		ctx:              ctx,
 		js:               js,
 		publishOpts:      publishOpts,
 		microRespondOpts: microRespondOpts,
-		logger:           logger,
 	}
 }
 
@@ -164,7 +184,9 @@ func (h EmitHandler) Handle(req micro.Request) {
 	case models.CommandMsgType:
 		h.QueueEmitCommand(req)
 	default:
-		h.logger.Error(fmt.Sprintf("Unrecognized msg type h:%s d:%s", req.Headers().Get("msg_type"), string(req.Data())))
+		LoggerFromContext(h.ctx).Warn(fmt.Sprintf(
+			"Unrecognized msg type h:%s d:%s",
+			req.Headers().Get("msg_type"), string(req.Data())))
 	}
 }
 
@@ -174,18 +196,18 @@ func (h *EmitHandler) QueueEmitCommand(req micro.Request) {
 
 	header := nats.Header(req.Headers())
 	vesselId := header.Get("vessel-id")
-	subject := "fleet." + vesselId + ".dispatch-commands"
+	subject := fmt.Sprintf("relay.emitter.%s.commands", vesselId)
 	reply := subject + ".reply"
 
 	var logger *zap.Logger
 	newSpanId, err := utils.GenerateSpanID()
 	if err != nil {
 		header.Set(models.SpanIdHeaderField, newSpanId)
-		logger = LoggerWithHeader(header, h.logger)
+		logger = LoggerWithHeader(header, LoggerFromContext(ctx))
 		logger.Warn("error creating new span-id", zap.String("fallback-span-id", newSpanId))
 	} else {
 		header.Set(models.SpanIdHeaderField, newSpanId)
-		logger = LoggerWithHeader(header, h.logger)
+		logger = LoggerWithHeader(header, LoggerFromContext(ctx))
 	}
 
 	msg := NewNatsMessage(subject, reply, header, req.Data())
@@ -221,4 +243,19 @@ func LoggerWithHeader(header nats.Header, logger *zap.Logger) *zap.Logger {
 		}
 	}
 	return logger.With(fields...)
+}
+
+func NewLoggerContext(parent context.Context, fields ...zap.Field) context.Context {
+	parentLogger := parent.Value(cfg.ContextLoggerKey).(*zap.Logger)
+	logger := parentLogger.With(fields...)
+	return context.WithValue(parent, cfg.ContextLoggerKey, logger)
+}
+
+func LoggerFromContext(ctx context.Context) *zap.Logger {
+	logger, ok := ctx.Value(cfg.ContextLoggerKey).(*zap.Logger)
+	if !ok {
+		log.Fatal("here")
+		return zap.NewNop()
+	}
+	return logger
 }

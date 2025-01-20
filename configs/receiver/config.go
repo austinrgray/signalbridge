@@ -121,7 +121,7 @@ func streamConfig() StreamConfig {
 			// MaxAge time.Duration
 			// MaxMsgsPerSubject int64
 			// MaxMsgSize int32
-			Storage: jetstream.MemoryStorage,
+			Storage: jetstream.FileStorage,
 			// Replicas int
 			// NoAck bool
 			// Duplicates time.Duration

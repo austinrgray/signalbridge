@@ -1,22 +1,40 @@
 package emitter_config
 
 import (
+	"time"
+
 	"github.com/nats-io/nats.go"
 	"github.com/nats-io/nats.go/jetstream"
 	"github.com/nats-io/nats.go/micro"
 )
 
+const ServiceName = "relay-emitter"
+
+type ContextKey int
+
+const (
+	ContextLoggerKey ContextKey = iota
+)
+
 type Config struct {
-	NATS  NATSConfig
-	JS    JSConfig
-	Micro MicroConfig
+	ServiceName       string
+	NATS              NATSConfig
+	JS                JSConfig
+	Micro             MicroConfig
+	MaxInitRetries    int
+	InitRetryDelay    time.Duration
+	InitResetInterval time.Duration
 }
 
 func LoadConfig() (Config, error) {
 	return Config{
-		NATS:  loadNATSConfig(),
-		JS:    loadJSConfig(),
-		Micro: loadMicroConfig(),
+		ServiceName:       ServiceName,
+		NATS:              loadNATSConfig(),
+		JS:                loadJSConfig(),
+		Micro:             loadMicroConfig(),
+		MaxInitRetries:    15,
+		InitRetryDelay:    15 * time.Second,
+		InitResetInterval: 10 * time.Minute,
 	}, nil
 }
 
@@ -25,11 +43,17 @@ type NATSConfig struct {
 	Options    []nats.Option
 }
 
+type HandlerKey int
+
+const (
+	NATSReconnectHandlerKey HandlerKey = iota
+)
+
 func loadNATSConfig() NATSConfig {
 	return NATSConfig{
 		ServerAddr: "nats://127.0.0.1:4222",
 		Options: []nats.Option{
-			nats.Name("emitter-service"),
+			nats.Name(ServiceName),
 			// nats.InProcessServer(),
 			// nats.Secure(),
 			// nats.ClientTLSConfig(),
@@ -51,7 +75,7 @@ func loadNATSConfig() NATSConfig {
 			// nats.DisconnectErrHandler(),
 			// nats.DisconnectHandler(),
 			// nats.ConnectHandler(),
-			// nats.ReconnectHandler(),
+			//nats.ReconnectHandler(),
 			// nats.ClosedHandler(),
 			// nats.DiscoveredServersHandler(),
 			// nats.ErrorHandler(),
@@ -69,7 +93,7 @@ func loadNATSConfig() NATSConfig {
 			// nats.UseOldRequestStyle(),
 			// nats.NoCallbacksAfterClientClose(),
 			// nats.LameDuckModeHandler(),
-			// nats.RetryOnFailedConnect(),
+			nats.RetryOnFailedConnect(true),
 			// nats.Compression(),
 			// nats.ProxyPath(),
 			// nats.CustomInboxPrefix(),
@@ -82,22 +106,18 @@ func loadNATSConfig() NATSConfig {
 }
 
 type JSConfig struct {
-	Name    string
-	Options []jetstream.JetStreamOpt
-	Streams []StreamConfig
+	Options    []jetstream.JetStreamOpt
+	EmitStream StreamConfig
 }
 
 func loadJSConfig() JSConfig {
 	return JSConfig{
-		Name:    "emitter-stream",
 		Options: []jetstream.JetStreamOpt{
 			// jetstream.WithClientTrace(ct),
 			// jetstream.WithPublishAsyncErrHandler(cb),
 			// jetstream.WithPublishAsyncMaxPending(max),
 		},
-		Streams: []StreamConfig{
-			streamConfig(),
-		},
+		EmitStream: emitStreamConfig(),
 	}
 }
 
@@ -105,12 +125,12 @@ type StreamConfig struct {
 	Config jetstream.StreamConfig
 }
 
-func streamConfig() StreamConfig {
+func emitStreamConfig() StreamConfig {
 	return StreamConfig{
 		Config: jetstream.StreamConfig{
-			Name:        "emitter-stream",
+			Name:        ServiceName + "-stream",
 			Description: "", //subjects.signalrelaystreamdescription
-			Subjects:    []string{"dispatch.>"},
+			Subjects:    []string{"relay.emitter.>"},
 			Retention:   jetstream.WorkQueuePolicy,
 			//MaxConsumers: ,
 			//MaxMsgs: ,
@@ -120,7 +140,7 @@ func streamConfig() StreamConfig {
 			// MaxAge time.Duration
 			// MaxMsgsPerSubject int64
 			// MaxMsgSize int32
-			Storage: jetstream.MemoryStorage,
+			Storage: jetstream.FileStorage,
 			// Replicas int
 			// NoAck bool
 			// Duplicates time.Duration
@@ -146,13 +166,13 @@ func streamConfig() StreamConfig {
 
 type MicroConfig struct {
 	Config    micro.Config
-	Endpoints []EndpointConfig
+	Endpoints map[string]EndpointConfig
 }
 
 func loadMicroConfig() MicroConfig {
 	return MicroConfig{
 		Config: micro.Config{
-			Name: "emitter-service",
+			Name: ServiceName + "-service",
 			//Endpoint: ,
 			Version:     "0.0.1",
 			Description: "",
@@ -162,8 +182,8 @@ func loadMicroConfig() MicroConfig {
 			//DoneHandler: ,
 			//ErrorHandler: ,
 		},
-		Endpoints: []EndpointConfig{
-			emitCommandConfig(),
+		Endpoints: map[string]EndpointConfig{
+			"EmitCommand": emitCommandConfig(),
 		},
 	}
 }
